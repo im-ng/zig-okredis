@@ -36,7 +36,7 @@ pub const SetParser = struct {
     ) !T {
         // HASHMAP
         if (@typeInfo(T) == .@"struct" and @hasDecl(T, "Entry")) {
-            const isManaged = @typeInfo(@TypeOf(T.deinit)).@"fn".params.len == 1;
+            const isManaged = @typeInfo(@TypeOf(T.deinit)).@"fn".param_types.len == 1;
 
             // TODO: write real implementation
             var buf: [100]u8 = undefined;
