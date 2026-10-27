@@ -11,9 +11,10 @@ pub const ListParser = struct {
         return switch (@typeInfo(T)) {
             .array => true,
             .@"struct" => |stc| {
-                for (stc.fields) |f|
-                    if (f.type == *anyopaque)
+                for (stc.field_names, stc.field_types, stc.field_attrs) |_, field_type, _| {
+                    if (field_type == *anyopaque)
                         return false;
+                }
                 return true;
             },
             else => false,
@@ -135,7 +136,7 @@ pub const ListParser = struct {
             .@"struct" => |stc| {
                 var foundNil = false;
                 var foundErr = false;
-                if (stc.fields.len != size) {
+                if (stc.field_names.len != size) {
                     // The user requested a struct but the list reply from Redis
                     // contains a different amount of items.
                     var i: usize = 0;
@@ -155,7 +156,7 @@ pub const ListParser = struct {
                 }
 
                 var result: T = undefined;
-                inline for (stc.fields) |field| {
+                inline for (stc.field_names, stc.field_types, stc.field_attrs) |field_name, field_type, _| {
                     if (foundNil or foundErr) {
                         rootParser.parse(void, r) catch |err| switch (err) {
                             error.GotErrorReply => {
@@ -164,10 +165,10 @@ pub const ListParser = struct {
                             else => return err,
                         };
                     } else {
-                        @field(result, field.name) = (if (@hasField(@TypeOf(allocator), "ptr"))
-                            rootParser.parseAlloc(field.type, allocator.ptr, r)
+                        @field(result, field_name) = (if (@hasField(@TypeOf(allocator), "ptr"))
+                            rootParser.parseAlloc(field_type, allocator.ptr, r)
                         else
-                            rootParser.parse(field.type, r)) catch |err| switch (err) {
+                            rootParser.parse(field_type, r)) catch |err| switch (err) {
                             else => return err,
                             error.GotNilReply => blk: {
                                 foundNil = true;

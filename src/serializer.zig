@@ -53,8 +53,8 @@ pub const CommandSerializer = struct {
 
                 // Count the number of arguments
                 var argNum: usize = 0;
-                inline for (std.meta.fields(CmdT)) |field| {
-                    const arg = @field(command, field.name);
+                inline for (@typeInfo(CmdT).@"struct".field_names, @typeInfo(CmdT).@"struct".field_types, @typeInfo(CmdT).@"struct".field_attrs) |field_name, _, _| {
+                    const arg = @field(command, field_name);
                     const ArgT = @TypeOf(arg);
                     if (comptime traits.isArguments(ArgT)) {
                         argNum += ArgT.RedisArguments.count(arg);
@@ -79,8 +79,8 @@ pub const CommandSerializer = struct {
                 try w.print("*{}\r\n", .{argNum});
 
                 // Serialize each argument
-                inline for (std.meta.fields(CmdT)) |field| {
-                    const arg = @field(command, field.name);
+                inline for (@typeInfo(CmdT).@"struct".field_names, @typeInfo(CmdT).@"struct".field_types, @typeInfo(CmdT).@"struct".field_attrs) |field_name, _, _| {
+                    const arg = @field(command, field_name);
                     const ArgT = @TypeOf(arg);
                     if (comptime traits.isArguments(ArgT)) {
                         try ArgT.RedisArguments.serialize(arg, CommandSerializer, w);

@@ -85,14 +85,14 @@ fn _forStruct(comptime T: type) type {
         // We are marking ouserlves also as an argument to manage struct serialization.
         pub const RedisArguments = struct {
             pub fn count(_: Self) usize {
-                return comptime std.meta.fields(T).len * 2;
+                return comptime @typeInfo(T).@"struct".field_names.len * 2;
             }
 
             pub fn serialize(self: Self, comptime rootSerializer: type, msg: anytype) !void {
-                inline for (std.meta.fields(T)) |field| {
-                    const arg = @field(self.values, field.name);
+                inline for (@typeInfo(T).@"struct".field_names, @typeInfo(T).@"struct".field_types, @typeInfo(T).@"struct".field_attrs) |field_name, _, _| {
+                    const arg = @field(self.values, field_name);
                     const ArgT = @TypeOf(arg);
-                    try rootSerializer.serializeArgument(msg, []const u8, field.name);
+                    try rootSerializer.serializeArgument(msg, []const u8, field_name);
                     try rootSerializer.serializeArgument(msg, ArgT, arg);
                 }
             }
